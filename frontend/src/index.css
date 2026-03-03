@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-neutral-200 text-neutral-900 rounded-lg font-medium hover:bg-neutral-300 transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-card hover:shadow-card-hover transition-shadow duration-300 p-6;
+  }
+
+  .badge-success {
+    @apply inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium;
+  }
+
+  .badge-warning {
+    @apply inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium;
+  }
+
+  .badge-danger {
+    @apply inline-block px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium;
+  }
+
+  .badge-pending {
+    @apply inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium;
+  }
+}
