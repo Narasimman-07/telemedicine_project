@@ -9,6 +9,8 @@ from django.db.models import Count, Sum, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 import uuid
+from .models import DoctorProfile
+from .serializers import DoctorProfileSerializer, DoctorProfileCreateSerializer
 
 from .models import (
     DoctorProfile, PatientProfile, Appointment, Prescription,
@@ -115,57 +117,117 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class DoctorViewSet(viewsets.ModelViewSet):
     """Doctor management endpoints"""
+
     queryset = DoctorProfile.objects.all()
     serializer_class = DoctorProfileSerializer
-    
+
     def get_permissions(self):
+
         if self.action in ['create']:
             return [AllowAny()]
-        elif self.action in ['approve', 'reject', 'update']:
+
+        elif self.action in ['approve', 'reject', 'update', 'add_doctor']:
             return [IsAdminUser()]
+
         return [IsAuthenticated()]
-    
+
     def get_queryset(self):
+
         user = self.request.user
+
         if user.role == 'admin':
             return DoctorProfile.objects.all()
+
         elif user.role == 'doctor':
             return DoctorProfile.objects.filter(user=user)
-        # Patients can see approved doctors
+
+       
         return DoctorProfile.objects.filter(is_approved=True, is_available=True)
-    
+
     def create(self, request, *args, **kwargs):
-        """Create doctor profile after user registration"""
+
         serializer = DoctorProfileCreateSerializer(data=request.data)
+
         if serializer.is_valid():
+
             doctor = serializer.save()
+
             return Response(
                 DoctorProfileSerializer(doctor).data,
                 status=status.HTTP_201_CREATED
             )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Approve a doctor"""
+
         doctor = self.get_object()
+
         doctor.is_approved = True
         doctor.save()
+
         return Response({'message': 'Doctor approved successfully'})
-    
+
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        """Reject a doctor"""
+
         doctor = self.get_object()
+
         doctor.is_approved = False
         doctor.save()
+
         return Response({'message': 'Doctor rejected'})
-    
+
+    @action(detail=False, methods=['post'], url_path='add')
+    def add_doctor(self, request):
+
+        name = request.data.get("name")
+        email = request.data.get("email")
+        password = request.data.get("password", "doctor123")
+
+        specialization = request.data.get("specialization")
+        license_number = request.data.get("license_number")
+        qualification = request.data.get("qualification")
+        experience_years = request.data.get("experience_years", 0)
+        consultation_fee = request.data.get("consultation_fee", 50)
+
+        try:
+
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                first_name=name,
+                role="doctor"
+            )
+
+            doctor = DoctorProfile.objects.create(
+                user=user,
+                specialization=specialization,
+                license_number=license_number,
+                qualification=qualification,
+                experience_years=experience_years,
+                consultation_fee=consultation_fee,
+                is_approved=True
+            )
+
+            return Response(
+                DoctorProfileSerializer(doctor).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['get'])
     def pending(self, request):
-        """Get pending doctors"""
+
         doctors = DoctorProfile.objects.filter(is_approved=False)
+
         serializer = DoctorProfileSerializer(doctors, many=True)
+
         return Response(serializer.data)
 
 
